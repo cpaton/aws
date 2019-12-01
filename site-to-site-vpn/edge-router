@@ -1,0 +1,38 @@
+# Oustide IP Address changes each time the VPN is rebulit
+# This requires updates to the Edge Router configuration as the peer uses the IP addresses
+# Following config changes need to commit them - some changes are easier to make in the UI
+# Have to delete existing peers and then also the vtiXX addresses afterwards as both get added
+# Pre-Shared secrets need to be replaced before using these settings
+
+# $site = Get-EC2VpnConnection -VpnConnectionId vpn-0d0905ce022dab85b
+# $siteConfig = [xml]$site.CustomerGatewayConfiguration
+# $siteConfig.vpn_connection.ipsec_tunnel[0].ike.pre_shared_key
+# $siteConfig.vpn_connection.ipsec_tunnel[1].ike.pre_shared_key
+
+# $preSharedKeys = ConvertFrom-Json ((Get-SECSecretValue -SecretId vpn/site-to-site/pre-shared-keys).SecretString)
+
+
+
+configure
+
+set vpn ipsec site-to-site peer <$siteConfig.vpn_connection.ipsec_tunnel[0].vpn_gateway.tunnel_outside_address.ip_address> authentication mode pre-shared-secret
+set vpn ipsec site-to-site peer <$siteConfig.vpn_connection.ipsec_tunnel[0].vpn_gateway.tunnel_outside_address.ip_address> authentication pre-shared-secret <$preSharedKeys.Tunnel1PreSharedKey>
+set vpn ipsec site-to-site peer <$siteConfig.vpn_connection.ipsec_tunnel[0].vpn_gateway.tunnel_outside_address.ip_address> connection-type initiate
+set vpn ipsec site-to-site peer <$siteConfig.vpn_connection.ipsec_tunnel[0].vpn_gateway.tunnel_outside_address.ip_address> description ipsec-aws
+set vpn ipsec site-to-site peer <$siteConfig.vpn_connection.ipsec_tunnel[0].vpn_gateway.tunnel_outside_address.ip_address> local-address <public-ip>
+set vpn ipsec site-to-site peer <$siteConfig.vpn_connection.ipsec_tunnel[0].vpn_gateway.tunnel_outside_address.ip_address> ike-group FOO0
+set vpn ipsec site-to-site peer <$siteConfig.vpn_connection.ipsec_tunnel[0].vpn_gateway.tunnel_outside_address.ip_address> vti bind vti0
+set vpn ipsec site-to-site peer <$siteConfig.vpn_connection.ipsec_tunnel[0].vpn_gateway.tunnel_outside_address.ip_address> vti esp-group FOO0
+
+
+set vpn ipsec site-to-site peer <$siteConfig.vpn_connection.ipsec_tunnel[1].vpn_gateway.tunnel_outside_address.ip_address> authentication mode pre-shared-secret
+set vpn ipsec site-to-site peer <$siteConfig.vpn_connection.ipsec_tunnel[1].vpn_gateway.tunnel_outside_address.ip_address> authentication pre-shared-secret <$preSharedKeys.Tunnel2PreSharedKey>
+set vpn ipsec site-to-site peer <$siteConfig.vpn_connection.ipsec_tunnel[1].vpn_gateway.tunnel_outside_address.ip_address> connection-type initiate
+set vpn ipsec site-to-site peer <$siteConfig.vpn_connection.ipsec_tunnel[1].vpn_gateway.tunnel_outside_address.ip_address> description ipsec-aws
+set vpn ipsec site-to-site peer <$siteConfig.vpn_connection.ipsec_tunnel[1].vpn_gateway.tunnel_outside_address.ip_address> local-address <public-ip>
+set vpn ipsec site-to-site peer <$siteConfig.vpn_connection.ipsec_tunnel[1].vpn_gateway.tunnel_outside_address.ip_address> ike-group FOO0
+set vpn ipsec site-to-site peer <$siteConfig.vpn_connection.ipsec_tunnel[1].vpn_gateway.tunnel_outside_address.ip_address> vti bind vti1
+set vpn ipsec site-to-site peer <$siteConfig.vpn_connection.ipsec_tunnel[1].vpn_gateway.tunnel_outside_address.ip_address> vti esp-group FOO0
+
+set interfaces vti vti0 address <"$($siteConfig.vpn_connection.ipsec_tunnel[0].customer_gateway.tunnel_inside_address.ip_address)/$($siteConfig.vpn_connection.ipsec_tunnel[0].customer_gateway.tunnel_inside_address.network_cidr)">
+set interfaces vti vti1 address <"$($siteConfig.vpn_connection.ipsec_tunnel[1].customer_gateway.tunnel_inside_address.ip_address)/$($siteConfig.vpn_connection.ipsec_tunnel[1].customer_gateway.tunnel_inside_address.network_cidr)">

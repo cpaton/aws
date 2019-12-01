@@ -1,0 +1,23 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: AWS Site-To-Site VPN Connection
+Resources:
+  SiteToSiteVPN:
+    Type: AWS::EC2::VPNConnection
+    Properties: 
+      CustomerGatewayId: cgw-0e6049f7741264f78
+      VpnGatewayId: vgw-00e756cc43be87ba9
+      StaticRoutesOnly: true
+      Tags: 
+        - Key: Name
+          Value: site-to-site-vpn-home
+      Type: ipsec.1      
+      VpnTunnelOptionsSpecifications: 
+        - TunnelInsideCidr: 169.254.20.44/30
+          PreSharedKey: '{{resolve:secretsmanager:vpn/site-to-site/pre-shared-keys:SecretString:Tunnel1PreSharedKey}}'
+        - TunnelInsideCidr: 169.254.22.152/30
+          PreSharedKey: '{{resolve:secretsmanager:vpn/site-to-site/pre-shared-keys:SecretString:Tunnel2PreSharedKey}}'
+  SiteToSiteVPNStaticRoute:
+    Type: AWS::EC2::VPNConnectionRoute
+    Properties: 
+      DestinationCidrBlock: 192.168.0.0/24
+      VpnConnectionId: !Ref SiteToSiteVPN

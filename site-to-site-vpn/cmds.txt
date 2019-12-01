@@ -1,0 +1,1 @@
+New-CFNStack -StackName SiteToSiteVPN -TemplateBody ( [System.IO.File]::ReadAllLines("$pwd\template.yml") | Out-String )
